@@ -17,5 +17,4 @@ By running the program, it is possible to:
 - run a demo that explains the algorithms with some examples.
 
 The repo contains an [executable](exam.out), compiled on linux with the
-command:
-    g++ -lz3
+command: `g++ -lz3`.
