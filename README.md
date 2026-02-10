@@ -35,7 +35,7 @@ better solutions in some cases.  However, z3 can be slower, as there are more
 ways of combining numbers.
 
 The third one is a variant of the first one and it is the solution of the
-optional task.
+[optional task](https://github.com/informatica-unica/smt/blob/main/Exercises/Exam.py#L49).
 
 
 ## Usage
