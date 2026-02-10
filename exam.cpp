@@ -1,9 +1,13 @@
 #include<iostream>
+#include<limits>
 #include<optional>
 #include<sstream>
+#include<stdexcept>
 
 #include "z3++.h"
 
+
+using std::cerr;
 using std::cin;
 using std::cout;
 using std::endl;
@@ -61,7 +65,7 @@ void solution::print_impl(const string & distance_text) const {
     cout << "Numbers used: " << size + 1 << endl;
 }
 
-// base class for things common to the two algorithms
+// base class for code used by all the implementations
 class counting_solver {
     public:
         bool solve_exact();
@@ -78,25 +82,35 @@ class counting_solver {
         solver s;
         unsigned step = 0; // algorithm iteration number
 
-        counting_solver(const vector<int> & n, int g) : nums(n), goal(g), Operation(c), Z(c.int_sort()), s(c) {}
+        counting_solver(const vector<int> & n, int g) :
+            nums(n), goal(g), Operation(c), Z(c.int_sort()), s(c), nums_size(int_cast(nums.size())) {}
 
         virtual ~counting_solver() = default;
 
         expr nums_to_z3_array(const string &); // return a z3 array containing the same elements as "nums"
 
         // "e" is meant to be a z3 int representing an index for an array
-        void in_range(const expr & e) {s.add(e >= 0 && e < static_cast<int>(nums.size()));} // TODO: check cast
+        void in_range(const expr & e) {s.add(e >= 0 && e < nums_size);}
 
         expr operation_cond(unsigned op) const {return operation[step] == Operation.consts[op]();}
 
-        unsigned max_step() const {return nums.size() - 1;} // TODO: check nums.size() > 0
+        unsigned max_step() const {return nums.size() - 1;}
         void add_step_constr(); // add constraints for current step
 
     private:
+        const int nums_size;
+
+        template<typename T> static int int_cast(T);
+
         virtual void add_step_constr_v() = 0; // used inside "add_step_constr"
         virtual expr res() const = 0; // final result of current iteration
         virtual void print_solution(const solution &) const = 0;
 };
+
+template<typename T> int counting_solver::int_cast(T t) {
+    if(t > std::numeric_limits<int>::max() || t < 2) throw std::runtime_error("Invalid number of inputs");
+    return static_cast<int>(t);
+}
 
 void counting_solver::add_step_constr() {
     operation.push_back(c.constant(("operation_" + to_string(step)).c_str(), Operation.srt));
@@ -329,19 +343,8 @@ void counting_strategy_resilient(const vector<int> & nums, int goal) {
 
 void demo() {
     string i;
-    cout <<
-        "Given a list of integers (with possile repetitions) and a goal, this " << endl <<
-        "program returns a strategy to combine the integers, using the " << endl <<
-        "elementary operations (+, -, *, /), to obtain a number as close as " << endl <<
-        "possible to the goal.  For equal distances from the goal, a solution " << endl <<
-        "that uses fewer numbers is considered to be a better solution." << endl << endl;
-    cout <<
-        "First, an initial result is choosen.  Then, at every iteration, a " << endl <<
-        "number together with an operation is choosen, and the new result is " << endl <<
-        "the evaluation of the operation applied to the number and to the " << endl <<
-        "previous result.  Each number can only be used once (considering " << endl <<
-        "repetitions are possible)." << endl << endl;
-    cout << "An example:" << endl << endl;
+
+    cout << "Implementation 1 example:\n" << endl;
     counting_strategy({1, 3, 5, 8, 10, 50}, 462);
 
     cout << "Press enter to continue..." << endl;
@@ -360,82 +363,47 @@ void demo() {
     cout << "Press enter to continue..." << endl;
     getline(cin, i);
 
-    cout <<
-        "We present an alternative algorithm.  Starting with a list of numbers, " << endl <<
-        "we can replace two numbers in that list with the result of one of the " << endl <<
-        "operations applied to these numbers, and repeat the procedure with " << endl <<
-        "the new list (that contains one fewer element).  This way, we can " << endl <<
-        "combine numbers in additional ways (compared to the first algorithm)." << endl << endl;
-
-    cout << "Press enter to continue..." << endl;
-    getline(cin, i);
-
-    cout << "An example: " << endl << endl;
+    cout << "Implementation 2 example:\n" << endl;
     counting_strategy({1, 3, 5, 8, 10, 50}, 462, true);
 
     cout << "Press enter to continue..." << endl;
     getline(cin, i);
 
-    cout <<
-        "We apply both algorithms to the same problem:" << endl << endl;
-
+    cout << "Implementation 1 and 2 comparison:\n" << endl;
     counting_strategy({1, 3, 5, 8, 10, 50}, 274);
     counting_strategy({1, 3, 5, 8, 10, 50}, 274, true);
 
-    cout <<
-        "The second algorithm gives a better solution." << endl << endl;
+    cout << "Implementation 2 gives a better solution (fewer numbers used).\n" << endl;
 
     cout << "Press enter to continue..." << endl;
     getline(cin, i);
 
-    cout <<
-        "Now we implement a variation of the first algorithm: the last number " << endl <<
-        "used can be \"attacked\" and replaced with a number between 0 and 10." << endl <<
-        "We want to find the strategy that gives the better approximation of the " << endl <<
-        "goal after the worst possible attack." << endl << endl;
-
-    cout << "Press enter to continue..." << endl;
-    getline(cin, i);
-
-    cout << "An example: " << endl;
+    cout << "Resilient example:\n" << endl;
     counting_strategy_resilient({1, 3, 5, 8, 10, 50}, 462);
 }
 
-int main() {
-    string input;
-    cout << "Run a demo [D]" << endl;
-    cout << "Insert numbers [I]" << endl;
-
-    vector<int> nums;
-    int goal = 0;
-    getline(cin, input);
-    if (input == "d" || input == "D") demo();
-    else if (input == "I" || input == "i") {
-        string s;
-        int i;
-        cout << endl << "Insert whitespace separated integers (at least two): ";
-        getline(cin, s);
-        std::istringstream is(s);
-        while (is >> i) nums.push_back(i);
-        cout << "Insert goal: ";
-        getline(cin, s);
-        std::istringstream is2(s);
-        is2 >> goal;
-
-        cout << endl;
-        cout << "Choose algorithm: " << endl;
-        cout << "counting_strategy1 [1]" << endl;
-        cout << "counting_strategy2 [2]" << endl;
-        cout << "counting_strategy_resilient [3]" << endl;
-
-        getline(cin, s);
-        cout << endl;
-        if (s == "1") counting_strategy(nums, goal);
-        else if (s == "2") counting_strategy(nums, goal, true);
-        else if (s == "3") counting_strategy_resilient(nums, goal);
-        else cout << "invalid input";
+int main(int argc, char *argv[]) {
+    bool alt = false;
+    bool res = false;
+    vector<int> n;
+    for (int i = 1; i < argc; ++i) {
+        if (string(argv[i]) == "--demo") {
+            demo();
+            return 0;
+        }
+        else if (string(argv[i]) == "-a") alt = true;
+        else if (string(argv[i]) == "-r") res = true;
+        else n.push_back(std::stoi(argv[i]));
     }
-    else cout << "invalid input" << endl;
+
+    if (n.size() < 3) {
+        cerr << "At least two numbers and a goal required" << endl;
+        return 1;
+    }
+    const int goal = n.back();
+    n.pop_back();
+    if (res) counting_strategy_resilient(n, goal);
+    else counting_strategy(n, goal, alt);
 
     return 0;
 }
