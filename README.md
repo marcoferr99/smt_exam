@@ -1,6 +1,8 @@
 # SMT exam solution
 
-Solution to the exam of the course: [Symbolic AI and SMT
+Solution to the
+[exam](https://github.com/informatica-unica/smt/blob/main/Exercises/Exam.py) of
+the course: [Symbolic AI and SMT
 solving](https://github.com/informatica-unica/smt).
 
 
