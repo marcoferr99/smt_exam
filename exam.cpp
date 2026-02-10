@@ -307,7 +307,7 @@ void counting_solver2::add_step_constr_v() {
 
     s.add(
         add_operation(0, expr_add) || add_operation(1, expr_sub) || add_operation(2, expr_mul) ||
-        (numbers[step][index2[step]] != 0 && add_operation(3, expr_div))
+        (numbers[step][index2[step]] != 0 && rem(numbers[step][index1[step]], numbers[step][index2[step]]) == 0 && add_operation(3, expr_div))
     );
 }
 
