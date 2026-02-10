@@ -44,5 +44,5 @@ Execute `./exam.out --demo` to run specific examples that highlight the
 characteristics of the three implementations.
 
 Execute `./exam.out n1..nk g` to solve the problem with numbers n1, n2, ..., nk
-and goal g.  k should be at least 2.  Add the options `-a`, `-r` to solve with
-implementation 2, 3 respectively.  Implementation 1 is the default.
+and goal g, where k should be at least 2.  Add the options `-a`, `-r` to solve
+with implementations 2, 3 respectively.  Implementation 1 is the default.
